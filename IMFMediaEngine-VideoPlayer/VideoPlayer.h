@@ -46,7 +46,6 @@ public:
 
 private:
     ComPtr<IMFMediaEngine> m_spMediaEngine;
-    ComPtr<IMFMediaEngineNotify> m_spEngineNotify;
     HWND m_hwndVideo;
     double m_volume;
     BOOL m_isPlaying;
