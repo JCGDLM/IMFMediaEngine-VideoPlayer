@@ -2,65 +2,6 @@
 #include <mferror.h>
 #include <cassert>
 
-// Classe pour gérer les notifications de IMFMediaEngine
-class MediaEngineNotify : public IMFMediaEngineNotify
-{
-public:
-    MediaEngineNotify(VideoPlayer* pPlayer) : m_cRef(1), m_pPlayer(pPlayer) {}
-
-    STDMETHODIMP QueryInterface(REFIID riid, void** ppv)
-    {
-        if (riid == IID_IUnknown || riid == IID_IMFMediaEngineNotify)
-        {
-            *ppv = static_cast<IMFMediaEngineNotify*>(this);
-            AddRef();
-            return S_OK;
-        }
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    STDMETHODIMP_(ULONG) AddRef()
-    {
-        return InterlockedIncrement(&m_cRef);
-    }
-
-    STDMETHODIMP_(ULONG) Release()
-    {
-        long cRef = InterlockedDecrement(&m_cRef);
-        if (cRef == 0)
-            delete this;
-        return cRef;
-    }
-
-    STDMETHODIMP EventNotify(DWORD meEvent, DWORD_PTR param1, DWORD param2)
-    {
-        switch (meEvent)
-        {
-        case MF_MEDIA_ENGINE_EVENT_LOADSTART:
-            OutputDebugString(L"Event: Load Started\n");
-            break;
-        case MF_MEDIA_ENGINE_EVENT_CANPLAY:
-            OutputDebugString(L"Event: Can Play\n");
-            break;
-        case MF_MEDIA_ENGINE_EVENT_PLAYING:
-            OutputDebugString(L"Event: Playing\n");
-            break;
-        case MF_MEDIA_ENGINE_EVENT_ENDED:
-            OutputDebugString(L"Event: Playback Ended\n");
-            break;
-        case MF_MEDIA_ENGINE_EVENT_ERROR:
-            OutputDebugString(L"Event: Error\n");
-            break;
-        }
-        return S_OK;
-    }
-
-private:
-    long m_cRef;
-    VideoPlayer* m_pPlayer;
-};
-
 VideoPlayer::VideoPlayer()
     : m_hwndVideo(NULL), m_volume(1.0), m_isPlaying(FALSE)
 {
@@ -90,15 +31,10 @@ HRESULT VideoPlayer::Initialize(HWND hwndVideo)
     if (FAILED(hr))
         return hr;
 
-    // Créer le notify
-    ComPtr<IMFMediaEngineNotify> spNotify = new MediaEngineNotify(this);
-    if (!spNotify)
-        return E_OUTOFMEMORY;
-
-    // Créer IMFMediaEngine
+    // Créer IMFMediaEngine sans notify (simplifié)
     hr = spFactory->CreateInstance(
         MF_MEDIA_ENGINE_REAL_TIME_MODE,
-        spNotify.Get(),
+        nullptr,
         &m_spMediaEngine);
 
     if (FAILED(hr))
