@@ -1,9 +1,11 @@
 #include <windows.h>
 #include <windowsx.h>
+#include <commdlg.h>
 #include "VideoPlayer.h"
 #include <shlwapi.h>
 
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "comdlg32.lib")
 
 // Variable globale pour accéder à VideoPlayer depuis le WndProc
 VideoPlayer* g_pVideoPlayer = nullptr;
