@@ -89,7 +89,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // Remplir la zone vidéo avec une couleur de fond
         RECT rect;
         GetClientRect(hwnd, &rect);
-        rect.top = 250; // Laisser de la place pour les boutons
+        rect.top = 0; // Remplir toute la fenêtre
         FillRect(hdc, &rect, (HBRUSH)GetStockObject(BLACK_BRUSH));
         
         EndPaint(hwnd, &ps);
@@ -136,53 +136,46 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         CLASS_NAME,
         L"IMFMediaEngine - Lecteur Vidéo",
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+        CW_USEDEFAULT, CW_USEDEFAULT, 1000, 700,
         NULL, NULL, hInstance, NULL
     );
 
     if (hwndMain == NULL)
+    {
+        CoUninitialize();
         return 1;
-
-    // Créer la zone vidéo (black rectangle)
-    g_hwndVideo = CreateWindowEx(
-        0,
-        L"STATIC",
-        L"",
-        WS_CHILD | WS_VISIBLE | SS_BLACKRECT,
-        10, 10, 780, 230,
-        hwndMain, NULL, hInstance, NULL
-    );
+    }
 
     // Créer les boutons de contrôle
     CreateWindowEx(
         0, L"BUTTON", L"Ouvrir",
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
-        10, 250, 80, 30,
+        10, 550, 80, 30,
         hwndMain, (HMENU)1001, hInstance, NULL
     );
 
     CreateWindowEx(
         0, L"BUTTON", L"Lecture",
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
-        100, 250, 80, 30,
+        100, 550, 80, 30,
         hwndMain, (HMENU)1002, hInstance, NULL
     );
 
     CreateWindowEx(
         0, L"BUTTON", L"Pause",
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
-        190, 250, 80, 30,
+        190, 550, 80, 30,
         hwndMain, (HMENU)1003, hInstance, NULL
     );
 
     CreateWindowEx(
         0, L"BUTTON", L"Arrêt",
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
-        280, 250, 80, 30,
+        280, 550, 80, 30,
         hwndMain, (HMENU)1004, hInstance, NULL
     );
 
-    // Initialiser le lecteur vidéo
+    // Initialiser le lecteur vidéo (avec hwndMain, pas hwndVideo)
     g_pVideoPlayer = new VideoPlayer();
     if (!g_pVideoPlayer)
     {
@@ -190,7 +183,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 1;
     }
 
-    hr = g_pVideoPlayer->Initialize(g_hwndVideo);
+    hr = g_pVideoPlayer->Initialize(hwndMain);
     if (FAILED(hr))
     {
         delete g_pVideoPlayer;
@@ -202,12 +195,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     ShowWindow(hwndMain, nCmdShow);
     UpdateWindow(hwndMain);
 
-    // Boucle de messages
+    // Boucle de messages avec rendu continu
     MSG msg = {};
-    while (GetMessage(&msg, NULL, 0, 0) > 0)
+    while (true)
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT)
+                break;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        else
+        {
+            // Rendu continu
+            if (g_pVideoPlayer)
+                g_pVideoPlayer->Render();
+        }
     }
 
     CoUninitialize();
