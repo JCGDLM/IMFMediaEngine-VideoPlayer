@@ -273,8 +273,8 @@ HRESULT VideoPlayer::Render()
         return E_FAIL;
 
     // Vérifier l'état du média
-    MF_MEDIA_ENGINE_NETWORK_STATE networkState = m_spMediaEngine->GetNetworkState();
-    MF_MEDIA_ENGINE_READY_STATE readyState = m_spMediaEngine->GetReadyState();
+    DWORD networkState = m_spMediaEngine->GetNetworkState();
+    DWORD readyState = m_spMediaEngine->GetReadyState();
 
     // Remplir le RenderTarget avec du noir
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
